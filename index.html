@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Polynomial Anatomy & Synthesis Explorer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+  <style>
+    :root { --panel-w: 360px; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f0f2f5; color: #1a1a1b; }
+    .wrap { max-width: 1200px; margin: 20px auto; padding: 15px; display: grid; grid-template-columns: 1fr var(--panel-w); gap: 15px; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; }
+    canvas { width: 100%; height: 550px; display: block; background: #fff; cursor: crosshair; border: 1px solid #ddd; }
+    h1 { font-size: 18px; margin-top: 0; color: #2c3e50; }
+    .control-group { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    .label-row { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; }
+    input[type="range"] { width: 100%; margin-bottom: 10px; }
+    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+    .btn-reset { background: #e74c3c; color: white; margin-top: 10px; }
+    .btn-reset:hover { background: #c0392b; }
+    .info-box { background: #e8f4fd; padding: 12px; border-radius: 8px; font-size: 14px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card"><canvas id="cv"></canvas></div>
+    <div class="card">
+      <h1>Polynomial Explorer</h1>
+      
+      <div class="control-group">
+        <div class="label-row"><span>Slider: y = x<sup>n</sup> + x</span> <span id="nVal">1.0</span></div>
+        <input id="nSlider" type="range" min="-3" max="3" step="0.5" value="1" />
+      </div>
+
+      <div class="control-group">
+        <div class="label-row">Custom Function f(x)</div>
+        <input id="funcInput" type="text" placeholder="e.g. 2x^2 - 4" />
+        <div style="font-size:11px; color:#666; margin-top:5px;">Limit: 1 Custom + 1 Slider function</div>
+      </div>
+
+      <div class="control-group">
+        <div class="label-row">Operations</div>
+        <div class="checkbox-grid">
+          <label><input type="checkbox" id="checkSum"> Sum (+)</label>
+          <label><input type="checkbox" id="checkDiff"> Diff (-)</label>
+          <label><input type="checkbox" id="checkProd"> Product (×)</label>
+        </div>
+      </div>
+
+      <div class="info-box" id="eqnDisplay">Active: y = x^1 + x</div>
+      <button class="btn-reset" onclick="resetAll()">Reset Explorer</button>
+    </div>
+  </div>
+
+<script>
+  const cv = document.getElementById("cv");
+  const ctx = cv.getContext("2d");
+  const nSlider = document.getElementById("nSlider");
+  const funcInput = document.getElementById("funcInput");
+  const eqnDisplay = document.getElementById("eqnDisplay");
+
+  let world = { xmin: -5, xmax: 5, ymin: -5, ymax: 5 };
+  let cssW, cssH;
+
+  function init() {
+    cssW = cv.clientWidth; cssH = cv.clientHeight;
+    cv.width = cssW; cv.height = cssH;
+    update();
+  }
+
+  function toScreen(x, y) {
+    return {
+      x: (x - world.xmin) / (world.xmax - world.xmin) * cssW,
+      y: (world.ymax - y) / (world.ymax - world.ymin) * cssH
+    };
+  }
+
+  function drawGrid() {
+    ctx.clearRect(0,0,cssW,cssH);
+    ctx.strokeStyle = "#eee"; ctx.lineWidth = 1;
+    for(let x=-10; x<=10; x++) {
+      let p1 = toScreen(x, -10), p2 = toScreen(x, 10);
+      ctx.beginPath(); ctx.moveTo(p1.x, 0); ctx.lineTo(p1.x, cssH); ctx.stroke();
+    }
+    for(let y=-10; y<=10; y++) {
+      let p = toScreen(0, y);
+      ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(cssW, p.y); ctx.stroke();
+    }
+    ctx.strokeStyle = "#999"; ctx.lineWidth = 2;
+    let origin = toScreen(0,0);
+    ctx.beginPath(); ctx.moveTo(0, origin.y); ctx.lineTo(cssW, origin.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(origin.x, 0); ctx.lineTo(origin.x, cssH); ctx.stroke();
+  }
+
+  function plot(fn, color, width=3) {
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath();
+    let first = true;
+    for(let i=0; i<=cssW; i++) {
+      let x = world.xmin + (i/cssW)*(world.xmax - world.xmin);
+      try {
+        let y = fn(x);
+        if (isNaN(y) || !isFinite(y)) { first = true; continue; }
+        let p = toScreen(x, y);
+        if(first) { ctx.moveTo(p.x, p.y); first = false; }
+        else ctx.lineTo(p.x, p.y);
+      } catch(e) { first = true; }
+    }
+    ctx.stroke();
+  }
+
+  function update() {
+    drawGrid();
+    const n = parseFloat(nSlider.value);
+    document.getElementById("nVal").innerText = n.toFixed(1);
+    
+    const f1 = (x) => Math.pow(x, n) + x;
+    plot(f1, "#3498db"); // Blue for slider
+
+    let f2 = null;
+    if(funcInput.value) {
+      try {
+        const node = math.parse(funcInput.value);
+        const code = node.compile();
+        f2 = (x) => code.evaluate({x: x});
+        plot(f2, "#e67e22"); // Orange for custom
+      } catch(e) { eqnDisplay.innerText = "Invalid Function Syntax"; }
+    }
+
+    // Operations
+    if(f2) {
+      if(document.getElementById("checkSum").checked) plot((x) => f1(x) + f2(x), "#2ecc71", 4);
+      if(document.getElementById("checkDiff").checked) plot((x) => f1(x) - f2(x), "#9b59b6", 4);
+      if(document.getElementById("checkProd").checked) plot((x) => f1(x) * f2(x), "#f1c40f", 4);
+    }
+  }
+
+  function resetAll() {
+    nSlider.value = 1;
+    funcInput.value = "";
+    document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
+    update();
+  }
+
+  [nSlider, funcInput, ...document.querySelectorAll('input[type=checkbox]')].forEach(el => {
+    el.addEventListener('input', update);
+  });
+
+  window.addEventListener('resize', init);
+  init();
+</script>
+</body>
+</html>
