@@ -6,222 +6,119 @@
   <title>Polynomial Anatomy & Synthesis Explorer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
   <style>
-    :root { --panel-w: 360px; }
-    body { 
-      margin: 0; 
-      font-family: system-ui, -apple-system, sans-serif; 
-      background: #f0f2f5; 
-      color: #1a1a1b; 
-    }
-    .wrap { 
-      max-width: 1200px; 
-      margin: 20px auto; 
-      padding: 15px; 
-      display: grid; 
-      grid-template-columns: 1fr var(--panel-w); 
-      gap: 15px; 
-    }
-    .card { 
-      background: white; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-      padding: 20px; 
-    }
-    canvas { 
-      width: 100%; 
-      height: 550px; 
-      display: block; 
-      background: #fff; 
-      cursor: crosshair; 
-      border: 1px solid #ddd; 
-      border-radius: 8px;
-    }
-    h1 { font-size: 18px; margin-top: 0; color: #2c3e50; }
-    .control-group { 
-      margin-bottom: 20px; 
-      padding-bottom: 15px; 
-      border-bottom: 1px solid #eee; 
-    }
-    .label-row { 
-      display: flex; 
-      justify-content: space-between; 
-      font-weight: 600; 
-      margin-bottom: 8px; 
-      font-size: 14px;
-    }
-    input[type="range"] { width: 100%; margin-bottom: 10px; cursor: pointer; }
-    input[type="text"] { 
-      width: 100%; 
-      padding: 10px; 
-      border: 1px solid #ccc; 
-      border-radius: 6px; 
-      box-sizing: border-box; 
-      font-size: 14px;
-    }
-    .checkbox-grid { 
-      display: grid; 
-      grid-template-columns: 1fr 1fr; 
-      gap: 10px; 
-      margin-top: 15px; 
-    }
-    .checkbox-grid label { font-size: 14px; cursor: pointer; }
-    button { 
-      width: 100%; 
-      padding: 12px; 
-      border: none; 
-      border-radius: 6px; 
-      cursor: pointer; 
-      font-weight: bold; 
-      transition: 0.2s; 
-    }
-    .btn-reset { background: #e74c3c; color: white; margin-top: 10px; }
-    .btn-reset:hover { background: #c0392b; }
-    .info-box { 
-      background: #e8f4fd; 
-      padding: 12px; 
-      border-radius: 8px; 
-      font-size: 15px; 
-      line-height: 1.5; 
-      font-weight: 600;
-      color: #2980b9;
-      border: 1px solid #b3d7ff;
-      margin-top: 10px;
-    }
-    .hint { font-size: 12px; color: #666; margin-top: 8px; }
+    :root { --panel-w: 380px; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f0f2f5; color: #1a1a1b; }
+    .wrap { max-width: 1200px; margin: 20px auto; padding: 15px; display: grid; grid-template-columns: 1fr var(--panel-w); gap: 15px; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; position: relative; }
+    canvas { width: 100%; height: 550px; display: block; background: #fff; border: 1px solid #ddd; border-radius: 8px; cursor: crosshair; }
+    
+    .toggle-slider-btn { position: absolute; top: 30px; right: 30px; padding: 8px 12px; font-size: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; z-index: 10; }
+    .toggle-slider-btn.off { background: #95a5a6; }
 
-    @media (max-width: 960px) {
-      .wrap { grid-template-columns: 1fr; }
-      :root { --panel-w: 1fr; }
-    }
+    h1 { font-size: 18px; margin-top: 0; color: #2c3e50; }
+    .control-group { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    .label-row { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+    input[type="range"] { width: 100%; cursor: pointer; }
+    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    
+    .legend-box { margin-top: 10px; padding: 8px; border-radius: 6px; font-weight: bold; font-family: 'Courier New', monospace; display: none; }
+    #fDisplay { color: #e67e22; border-left: 5px solid #e67e22; background: #fff5eb; }
+    #gDisplay { color: #e74c3c; border-left: 5px solid #e74c3c; background: #fdf2f2; }
+    #opDisplay { color: #2ecc71; border-left: 5px solid #2ecc71; background: #f0fff4; font-size: 13px; }
+
+    .checkbox-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .info-box { background: #e8f4fd; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; color: #2980b9; margin-top: 10px; }
+    button.reset { width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    
+    /* Coordinate Tooltip Style */
+    #tooltip { position: absolute; background: rgba(0, 0, 0, 0.85); color: white; padding: 10px; border-radius: 6px; font-size: 12px; pointer-events: none; display: none; line-height: 1.4; z-index: 20; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card"><canvas id="cv"></canvas></div>
+    <div class="card">
+      <button id="toggleSlider" class="toggle-slider-btn">Slider Graph: ON</button>
+      <canvas id="cv"></canvas>
+      <div id="tooltip"></div>
+    </div>
     
     <div class="card">
       <h1>Polynomial Explorer</h1>
       
       <div class="control-group">
-        <div class="label-row">
-          <span>Slider: y = x<sup>n</sup> + x</span> 
-          <span>n = <span id="nVal">1.0</span></span>
-        </div>
+        <div class="label-row"><span>y = x<sup>n</sup> + x</span> <span>n = <span id="nVal">1.0</span></span></div>
         <input id="nSlider" type="range" min="-3" max="3" step="0.5" value="1" />
-        <div class="hint">Investigate integer vs fractional powers.</div>
-        <div class="info-box" id="eqnDisplay">Active: y = x^1.0 + x</div>
       </div>
 
       <div class="control-group">
-        <div class="label-row">Custom Function f(x)</div>
+        <div class="label-row">Input Polynomial (Enter to add)</div>
         <input id="funcInput" type="text" placeholder="e.g. 2x^2 - 4" />
-        <div class="hint">Type a second polynomial to perform operations.</div>
+        <div id="fDisplay" class="legend-box"></div>
+        <div id="gDisplay" class="legend-box"></div>
       </div>
 
       <div class="control-group">
-        <div class="label-row">Operations (Slider & Custom)</div>
+        <div class="label-row">Operations (f vs g)</div>
         <div class="checkbox-grid">
           <label><input type="checkbox" id="checkSum"> Sum (+)</label>
           <label><input type="checkbox" id="checkDiff"> Diff (-)</label>
-          <label><input type="checkbox" id="checkProd"> Product (×)</label>
+          <label><input type="checkbox" id="checkProd"> Multi (×)</label>
         </div>
+        <div id="opDisplay" class="legend-box"></div>
       </div>
 
-      
-      <button class="btn-reset" onclick="resetAll()">Reset Explorer</button>
+      <div class="info-box" id="eqnDisplay">Slider: y = x^1.0 + x</div>
+      <button class="reset" onclick="resetAll()">Reset Explorer</button>
     </div>
   </div>
 
 <script>
-  const cv = document.getElementById("cv");
-  const ctx = cv.getContext("2d");
-  const nSlider = document.getElementById("nSlider");
-  const nValLabel = document.getElementById("nVal");
-  const funcInput = document.getElementById("funcInput");
-  const eqnDisplay = document.getElementById("eqnDisplay");
-
+  const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+  const nSlider = document.getElementById("nSlider"), funcInput = document.getElementById("funcInput");
+  const fBox = document.getElementById("fDisplay"), gBox = document.getElementById("gDisplay"), opBox = document.getElementById("opDisplay");
+  const tooltip = document.getElementById("tooltip");
+  
+  let sliderOn = true;
+  let functions = []; 
   let world = { xmin: -6, xmax: 6, ymin: -6, ymax: 6 };
-  let cssW, cssH;
+  let mouseX = null;
 
   function init() {
-    cssW = cv.clientWidth; 
-    cssH = cv.clientHeight;
-    cv.width = cssW; 
-    cv.height = cssH;
+    cv.width = cv.clientWidth; cv.height = cv.clientHeight;
     update();
   }
 
   function toScreen(x, y) {
-    return {
-      x: (x - world.xmin) / (world.xmax - world.xmin) * cssW,
-      y: (world.ymax - y) / (world.ymax - world.ymin) * cssH
-    };
+    return { x: (x - world.xmin) / (world.xmax - world.xmin) * cv.width, y: (world.ymax - y) / (world.ymax - world.ymin) * cv.height };
+  }
+
+  function toWorld(px, py) {
+    return { x: world.xmin + (px / cv.width) * (world.xmax - world.xmin), y: world.ymax - (py / cv.height) * (world.ymax - world.ymin) };
   }
 
   function drawGrid() {
-    ctx.clearRect(0,0,cssW,cssH);
-    
-    // Grid Lines
-    ctx.strokeStyle = "#f0f0f0"; 
-    ctx.lineWidth = 1;
-    for(let x = world.xmin; x <= world.xmax; x += 1) {
-      let p = toScreen(x, 0);
-      ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, cssH); ctx.stroke();
-    }
-    for(let y = world.ymin; y <= world.ymax; y += 1) {
-      let p = toScreen(0, y);
-      ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(cssW, p.y); ctx.stroke();
-    }
-
-    // Axis
-    ctx.strokeStyle = "#999"; 
-    ctx.lineWidth = 2;
-    let origin = toScreen(0,0);
-    ctx.beginPath(); ctx.moveTo(0, origin.y); ctx.lineTo(cssW, origin.y); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(origin.x, 0); ctx.lineTo(origin.x, cssH); ctx.stroke();
-
-    // Numbers on Axes
-    ctx.fillStyle = "#666";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-
-    // X-axis numbers
-    for (let x = world.xmin; x <= world.xmax; x++) {
-      if (x === 0) continue; 
-      let p = toScreen(x, 0);
-      ctx.fillText(x, p.x, origin.y + 5);
-    }
-
-    // Y-axis numbers
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for (let y = world.ymin; y <= world.ymax; y++) {
-      if (y === 0) continue;
-      let p = toScreen(0, y);
-      ctx.fillText(y, origin.x - 8, p.y);
-    }
-    
-    // Origin Label
-    ctx.fillText("0", origin.x - 8, origin.y + 5);
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle = "#f0f0f0"; ctx.lineWidth = 1;
+    for(let x = world.xmin; x <= world.xmax; x++) { let p = toScreen(x, 0); ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, cv.height); ctx.stroke(); }
+    for(let y = world.ymin; y <= world.ymax; y++) { let p = toScreen(0, y); ctx.beginPath(); ctx.moveTo(0, p.y); ctx.lineTo(cv.width, p.y); ctx.stroke(); }
+    ctx.strokeStyle = "#999"; ctx.lineWidth = 2; let origin = toScreen(0,0);
+    ctx.beginPath(); ctx.moveTo(0, origin.y); ctx.lineTo(cv.width, origin.y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(origin.x, 0); ctx.lineTo(origin.x, cv.height); ctx.stroke();
+    ctx.fillStyle = "#666"; ctx.font = "12px sans-serif";
+    for (let x = world.xmin; x <= world.xmax; x++) { if(x!==0) ctx.fillText(x, toScreen(x,0).x - 4, origin.y + 15); }
+    for (let y = world.ymin; y <= world.ymax; y++) { if(y!==0) ctx.fillText(y, origin.x - 20, toScreen(0,y).y + 5); }
   }
 
   function plot(fn, color, width=3) {
-    ctx.strokeStyle = color; 
-    ctx.lineWidth = width; 
-    ctx.beginPath();
+    ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath();
     let first = true;
-    
-    for(let i=0; i<=cssW; i++) {
-      let x = world.xmin + (i/cssW)*(world.xmax - world.xmin);
+    for(let i=0; i<=cv.width; i++) {
+      let x = world.xmin + (i/cv.width)*(world.xmax - world.xmin);
       try {
         let y = fn(x);
         if (isNaN(y) || !isFinite(y)) { first = true; continue; }
         let p = toScreen(x, y);
-        if(p.y < -100 || p.y > cssH + 100) { first = true; continue; } 
-        
-        if(first) { ctx.moveTo(p.x, p.y); first = false; }
-        else ctx.lineTo(p.x, p.y);
+        if(first) { ctx.moveTo(p.x, p.y); first = false; } else ctx.lineTo(p.x, p.y);
       } catch(e) { first = true; }
     }
     ctx.stroke();
@@ -230,42 +127,77 @@
   function update() {
     drawGrid();
     const n = parseFloat(nSlider.value);
-    nValLabel.innerText = n.toFixed(1);
-    eqnDisplay.innerText = `Active: y = x^${n.toFixed(1)} + x`;
+    document.getElementById("nVal").innerText = n.toFixed(1);
+    document.getElementById("eqnDisplay").innerText = `Slider: y = x^${n.toFixed(1)} + x`;
     
-    const f1 = (x) => Math.pow(x, n) + x;
-    plot(f1, "#3498db"); 
+    const sliderFn = (x) => Math.pow(x, n) + x;
+    if(sliderOn) plot(sliderFn, "#3498db");
 
-    let f2 = null;
-    if(funcInput.value.trim() !== "") {
+    if(functions[0]) plot(functions[0].fn, "#e67e22");
+    if(functions[1]) plot(functions[1].fn, "#e74c3c");
+
+    fBox.style.display = functions[0] ? 'block' : 'none';
+    if(functions[0]) fBox.innerText = `f(x) = ${functions[0].raw}`;
+    gBox.style.display = functions[1] ? 'block' : 'none';
+    if(functions[1]) gBox.innerText = `g(x) = ${functions[1].raw}`;
+
+    let opFn = null, opText = "";
+    if(functions.length === 2) {
+      const f = functions[0], g = functions[1];
+      if(document.getElementById("checkSum").checked) { opText = `(${f.raw}) + (${g.raw})`; opFn = (x) => f.fn(x) + g.fn(x); }
+      else if(document.getElementById("checkDiff").checked) { opText = `(${f.raw}) - (${g.raw})`; opFn = (x) => f.fn(x) - g.fn(x); }
+      else if(document.getElementById("checkProd").checked) { opText = `(${f.raw}) * (${g.raw})`; opFn = (x) => f.fn(x) * g.fn(x); }
+      if(opFn) { opBox.style.display = 'block'; opBox.innerText = `Result: ${opText}`; plot(opFn, "#2ecc71", 5); } else { opBox.style.display = 'none'; }
+    } else { opBox.style.display = 'none'; }
+
+    handleHover(sliderFn, opFn);
+  }
+
+  function handleHover(sliderFn, opFn) {
+    if (mouseX === null) { tooltip.style.display = "none"; return; }
+    const worldX = toWorld(mouseX, 0).x;
+    const snapX = Math.round(worldX);
+    
+    if (Math.abs(worldX - snapX) < 0.25) {
+      const p = toScreen(snapX, 0);
+      ctx.setLineDash([5, 5]); ctx.strokeStyle = "#ccc"; ctx.beginPath(); ctx.moveTo(p.x, 0); ctx.lineTo(p.x, cv.height); ctx.stroke(); ctx.setLineDash([]);
+      
+      let content = `<b>At x = ${snapX}:</b><br>`;
+      if(sliderOn) content += `<span style="color:#3498db">Slider: ${sliderFn(snapX).toFixed(2)}</span><br>`;
+      if(functions[0]) content += `<span style="color:#e67e22">f(x): ${functions[0].fn(snapX).toFixed(2)}</span><br>`;
+      if(functions[1]) content += `<span style="color:#e74c3c">g(x): ${functions[1].fn(snapX).toFixed(2)}</span><br>`;
+      if(opFn) content += `<span style="color:#2ecc71">Op Result: ${opFn(snapX).toFixed(2)}</span>`;
+      
+      tooltip.style.display = "block";
+      tooltip.innerHTML = content;
+      tooltip.style.left = (p.x + 15) + "px";
+      tooltip.style.top = "50px";
+    } else { tooltip.style.display = "none"; }
+  }
+
+  cv.addEventListener('mousemove', (e) => { mouseX = e.offsetX; update(); });
+  cv.addEventListener('mouseleave', () => { mouseX = null; update(); });
+
+  funcInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter' && funcInput.value.trim() !== "") {
       try {
-        const node = math.parse(funcInput.value);
-        const code = node.compile();
-        f2 = (x) => code.evaluate({x: x});
-        plot(f2, "#e67e22"); 
-      } catch(e) { 
-        eqnDisplay.innerText = "Syntax Error in f(x)"; 
-      }
+        const raw = funcInput.value;
+        const fn = (x) => math.evaluate(raw, {x: x});
+        if(functions.length >= 2) functions.shift();
+        functions.push({raw, fn});
+        funcInput.value = ""; update();
+      } catch(err) { alert("Syntax Error!"); }
     }
-
-    if(f2) {
-      if(document.getElementById("checkSum").checked) plot((x) => f1(x) + f2(x), "#2ecc71", 4);
-      if(document.getElementById("checkDiff").checked) plot((x) => f1(x) - f2(x), "#9b59b6", 4);
-      if(document.getElementById("checkProd").checked) plot((x) => f1(x) * f2(x), "#f1c40f", 4);
-    }
-  }
-
-  function resetAll() {
-    nSlider.value = 1;
-    funcInput.value = "";
-    document.querySelectorAll('input[type=checkbox]').forEach(el => el.checked = false);
-    update();
-  }
-
-  [nSlider, funcInput, ...document.querySelectorAll('input[type=checkbox]')].forEach(el => {
-    el.addEventListener('input', update);
   });
 
+  document.getElementById("toggleSlider").addEventListener('click', function() {
+    sliderOn = !sliderOn; this.innerText = `Slider Graph: ${sliderOn ? 'ON' : 'OFF'}`;
+    this.className = `toggle-slider-btn ${sliderOn ? '' : 'off'}`; update();
+  });
+
+  function resetAll() { functions = []; nSlider.value = 1; document.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false); update(); }
+  nSlider.addEventListener('input', update);
+  document.querySelectorAll('input[type=checkbox]').forEach(c => c.addEventListener('change', update));
   window.addEventListener('resize', init);
   init();
 </script>
