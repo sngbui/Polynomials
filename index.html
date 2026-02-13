@@ -61,14 +61,16 @@
     
     <div class="card">
       <h1>Polynomial Explorer</h1>
-      <div class="control-group" style="background: #fafafa; padding: 10px; border-radius: 8px;">
-        <div class="label-row"><span>🔍 Zoom (Scale)</span> <span id="zoomVal">6</span></div>
-        <input id="zoomSlider" type="range" min="5" max="100" step="5" value="6" />
-      </div>
       <div class="control-group">
         <div class="label-row"><span>y = x<sup>n</sup> + x</span> <span>n = <span id="nVal">1.0</span></span></div>
         <input id="nSlider" type="range" min="-3" max="5" step="0.5" value="1" />
       </div>
+       <div class="info-box" id="eqnDisplay"></div>
+      <div class="control-group" style="background: #fafafa; padding: 10px; border-radius: 8px;">
+        <div class="label-row"><span>🔍 Zoom (Scale)</span> <span id="zoomVal">6</span></div>
+        <input id="zoomSlider" type="range" min="5" max="100" step="5" value="6" />
+      </div>
+      
       <div class="control-group">
         <div class="label-row">Input Polynomial (Enter to add)</div>
         <input id="funcInput" type="text" placeholder="e.g. 2x^2 - 4" />
@@ -76,15 +78,14 @@
         <div id="gDisplay" class="legend-box"></div>
       </div>
       <div class="control-group">
-        <div class="label-row">Operations (f vs g)</div>
+        <div class="label-row">Operations </div>
         <div class="checkbox-grid">
           <label><input type="checkbox" id="checkSum"> Sum (+)</label>
-          <label><input type="checkbox" id="checkDiff"> Diff (-)</label>
-          <label><input type="checkbox" id="checkProd"> Multi (×)</label>
+          <label><input type="checkbox" id="checkDiff"> Difference (-)</label>
+          <label><input type="checkbox" id="checkProd"> Multiply (×)</label>
         </div>
         <div id="opDisplay" class="legend-box"></div>
       </div>
-      <div class="info-box" id="eqnDisplay"></div>
       <button class="reset" onclick="resetAll()">Reset Explorer</button>
     </div>
 
@@ -190,9 +191,9 @@
     const snapThreshold = (world.xmax - world.xmin) / 40;
     if (Math.abs(worldX - snapX) < snapThreshold) {
       let content = `<b>Coordinate at x = ${snapX}:</b><hr style="border:0;border-top:1px solid #444;margin:5px 0">`;
-      if(sliderOn) { const y = sliderFn(snapX); drawPoint(snapX, y, "#3498db"); content += `<span style="color:#5dade2">Slider: ${y.toFixed(2)}</span><br>`; }
-      if(functions[0]) { const y = functions[0].fn(snapX); drawPoint(snapX, y, "#e67e22"); content += `<span style="color:#edbb99">f(x): ${y.toFixed(2)}</span><br>`; }
-      if(functions[1]) { const y = functions[1].fn(snapX); drawPoint(snapX, y, "#e74c3c"); content += `<span style="color:#f1948a">g(x): ${y.toFixed(2)}</span><br>`; }
+      if(sliderOn) { const y = sliderFn(snapX); drawPoint(snapX, y, "#3498db"); content += `<span style="color:#5dade2">y= ${y.toFixed(2)}</span><br>`; }
+      if(functions[0]) { const y = functions[0].fn(snapX); drawPoint(snapX, y, "#e67e22"); content += `<span style="color:#edbb99">f(x)= ${y.toFixed(2)}</span><br>`; }
+      if(functions[1]) { const y = functions[1].fn(snapX); drawPoint(snapX, y, "#e74c3c"); content += `<span style="color:#f1948a">g(x)= ${y.toFixed(2)}</span><br>`; }
       if(opFn) { const y = opFn(snapX); drawPoint(snapX, y, "#2ecc71"); content += `<span style="color:#82e0aa">Operation: ${y.toFixed(2)}</span>`; }
       tooltip.style.display = "block"; tooltip.innerHTML = content; tooltip.style.left = (toScreen(snapX, 0).x + 15) + "px"; tooltip.style.top = "50px";
     } else tooltip.style.display = "none";
