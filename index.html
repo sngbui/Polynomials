@@ -31,12 +31,24 @@
     button.reset { width: 100%; padding: 12px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     #tooltip { position: absolute; background: rgba(0, 0, 0, 0.9); color: white; padding: 12px; border-radius: 8px; font-size: 13px; pointer-events: none; display: none; line-height: 1.5; z-index: 20; border: 1px solid #555; }
 
-    /* Quote Box Style */
-    .quote-card { grid-column: 1 / span 2; text-align: center; padding: 40px 20px; background: none; box-shadow: none; }
-    .quote-text { font-size: 28px; font-style: italic; color: #34495e; font-family: 'Georgia', serif; line-height: 1.4; margin-bottom: 10px; }
-    .quote-author { font-size: 18px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
+    /* Updated Quote Box Style */
+    .quote-card { grid-column: 1 / span 2; text-align: center; padding: 40px 10px; background: none; box-shadow: none; }
+    .quote-text { 
+      font-size: 24px; 
+      font-style: italic; 
+      color: #34495e; 
+      font-family: 'Georgia', serif; 
+      line-height: 1.2; 
+      margin-bottom: 8px;
+      white-space: nowrap; /* Prevents the last word from wrapping */
+    }
+    .quote-author { font-size: 16px; font-weight: bold; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px; }
 
-    @media (max-width: 960px) { .wrap { grid-template-columns: 1fr; } .quote-card { grid-column: 1; } }
+    @media (max-width: 960px) { 
+      .wrap { grid-template-columns: 1fr; } 
+      .quote-card { grid-column: 1; }
+      .quote-text { white-space: normal; font-size: 20px; } /* Re-allow wrap on mobile/small screens */
+    }
   </style>
 </head>
 <body>
